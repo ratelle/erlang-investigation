@@ -1,0 +1,8 @@
+#! /usr/bin/env stap
+
+
+probe syscall.select
+{
+    if (execname() == "beam.smp")
+        printf("%d %d select : %s\n", pid(), tid(), $$parms);
+}

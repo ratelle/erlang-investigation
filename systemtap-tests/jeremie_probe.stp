@@ -1,0 +1,4 @@
+probe process("beam.smp").mark("jeremie-probe")
+{
+    printf("Jeremie's number on process spawn is %d\n", $arg1);
+}

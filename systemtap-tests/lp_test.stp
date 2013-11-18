@@ -1,0 +1,63 @@
+#! /usr/bin/env stap
+#
+#
+
+global epoll_timeout_flag, epoll_count, epoll_min, epoll_max,
+epoll_times, epoll_timeouts
+
+probe  syscall.epoll_wait {
+    if(timeout > 0) {
+        epoll_timeout_flag[pid()] = 1
+    }
+}
+
+probe  syscall.epoll_wait.return {
+  c = cpu()
+  p = execname()
+
+  epoll_times[c,p] ++
+  epoll_count[c,p] += $return
+
+  if($return == 0 && pid() in epoll_timeout_flag) {
+    epoll_timeouts[c,p] ++
+    delete epoll_timeout_flag[pid()]
+  }
+
+  if(!([c, p] in epoll_min)) {
+    epoll_min[c,p] = $return
+  } else if($return < epoll_min[c,p]) {
+    epoll_min[c,p] = $return
+  }
+
+
+  if($return > epoll_max[c,p]) {
+    epoll_max[c,p] = $return
+  }
+}
+
+probe timer.s($1) {
+  printf ("%4s %45s %10s %10s %10s %10s %10s %10s\n", "cpu",
+"process", "times", "revents", "min", "max", "avg", "timeouts" )
+  foreach ([cpu, process] in epoll_count- limit 20) {
+      all_epoll_times += epoll_times[cpu,process]
+      all_epoll_count += epoll_count[cpu,process]
+      all_epoll_timeouts += epoll_timeouts[cpu,process]
+  }
+  printf ("%4s %45s %10d %10d %10s %10s %10d %10d\n",
+    "all", "", all_epoll_times, all_epoll_count, "-", "-",
+    all_epoll_count == 0? 0:all_epoll_count/all_epoll_times, all_epoll_timeouts)
+
+  foreach ([cpu, process] in epoll_count- limit 20) {
+     printf ("[%2d] %45s %10d %10d %10d %10d %10d %10d\n",
+        cpu, process, epoll_times[cpu, process], epoll_count[cpu, process],
+        epoll_min[cpu, process], epoll_max[cpu, process],
+        epoll_count[cpu,process]/epoll_times[cpu,process],
+        epoll_timeouts[cpu,process])
+  }
+  delete epoll_count
+  delete epoll_min
+  delete epoll_max
+  delete epoll_times
+  delete epoll_timeouts
+  printf ("--------------------------------------------------------------------------\n\n")
+}

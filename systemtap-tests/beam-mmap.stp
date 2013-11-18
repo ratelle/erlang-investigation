@@ -1,0 +1,11 @@
+probe syscall.mmap2.call
+{
+    if( pid() == target() )
+        printf("%s -> mmap2 %s\n", thread_indent(-1), $$parms);
+}
+
+probe syscall.mmap2.return
+{
+    if( pid() == target() )
+        printf("%s <- mmap2 %s\n", thread_indent(-1), $$return);
+}

@@ -1,0 +1,36 @@
+#! /usr/bin/env stap
+
+%{
+typedef unsigned long Uint;
+typedef unsigned int Uint32;
+
+typedef union {
+    Uint val;
+    Uint32 hval[2];
+} HUint;
+
+#define ERTS_HUINT_HVAL_LOW 0
+#define ERTS_PTAB_ID_DATA_SHIFT 4
+#define _PID_NUM_SIZE 15
+#define _GETBITS(X,Pos,Size) (((X) >> (Pos)) & ~(~((Uint) 0) << (Size)))
+%}
+
+function __pid_number:long(id) %{
+    HUint huint;
+    Uint data;
+    huint.val = (Uint)STAP_ARG_id;
+    data = (Uint) (huint.hval[ERTS_HUINT_HVAL_LOW] >> ERTS_PTAB_ID_DATA_SHIFT);
+    STAP_RETVALUE = _GETBITS(data,0,_PID_NUM_SIZE);
+%}
+
+probe process("beam.smp").function("schedule")
+{
+    
+    printf("%d %d schedule reductions : %d\n", tid(), __pid_number($p->common->id),  $calls);
+}
+
+
+probe process("beam.smp").function("scheduler_wait")
+{
+    printf("%d scheduler_wait %s\n", tid(), $$parms);
+}
