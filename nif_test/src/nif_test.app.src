@@ -1,0 +1,8 @@
+{application, nif_test, [
+  {description, "Erlang Adgear Geo NIF"},
+  {vsn, "1.2.1"},
+  {applications, [
+    kernel,
+    stdlib
+  ]}
+]}.

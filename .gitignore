@@ -1,0 +1,4 @@
+*.o
+*.so
+/nif_test/ebin
+/nif_test/erl_crash.dump
