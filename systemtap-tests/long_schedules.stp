@@ -1,5 +1,3 @@
-#! /usr/bin/env stap
-
 %{
 typedef unsigned long Uint;
 typedef unsigned int Uint32;
@@ -23,17 +21,10 @@ function __pid_number:long(id) %{
     STAP_RETVALUE = _GETBITS(data,0,_PID_NUM_SIZE);
 %}
 
-probe process("beam.smp").mark("process__unscheduled")
+probe process("beam.smp").function("monitor_long_schedule_proc")
 {
-    printf("%d : %s unscheduled after %d reductions\n", tid(), user_string($arg1), $calls);
-}
+    reductions = p->reds;
+    pid_number = __pid_number(process->common->id);
 
-probe process("beam.smp").mark("process__scheduled")
-{
-    printf("%d : %s scheduled in %s\n", tid(), user_string($arg1), user_string($arg2));
-}
-
-probe process("beam.smp").function("scheduler_wait")
-{
-    printf("%d scheduler_wait %s\n", tid(), $$parms);
+    printf("Long schedule in %d having done %d reductions\n", pid_number, reductions);
 }
