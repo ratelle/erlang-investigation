@@ -1,5 +1,6 @@
 *.o
 *.so
 *.beam
+/c_tests/a.out
 /nif_test/ebin
 /nif_test/erl_crash.dump
