@@ -3,7 +3,8 @@
 -export([run_test/3,
          run_self_spinner_test/1,
          run_spinner_killer_test/1,
-         low_spinner_starter/0]).
+         low_spinner_starter/0,
+         run_spinner_counter/1]).
 
 -define(LOW_REDUCTIONS, 1900).
 -define(HIGH_REDUCTIONS, 8000).
@@ -12,6 +13,11 @@ run_test(LowGenerators, HighGenerators, ChildrenPerSecond) ->
     start_long_schedule_logger(1),
     [spawn(fun () -> low_generator(ChildrenPerSecond,ChildrenPerSecond) end) || _X <- lists:seq(1,LowGenerators)],
     [spawn(fun () -> high_generator(ChildrenPerSecond,ChildrenPerSecond) end) || _X <- lists:seq(1,HighGenerators)],
+    ok.
+
+run_spinner_counter(Spinners) ->
+    start_long_schedule_counter(1),
+    [spawn(fun high_spinner_starter/0) || _X <- lists:seq(1,Spinners)],
     ok.
 
 run_self_spinner_test(Spinners) ->
@@ -34,6 +40,27 @@ long_schedule_logger() ->
     end,
     long_schedule_logger().
 
+start_long_schedule_counter(LongSchedule) ->
+    Logger = spawn(fun () -> long_schedule_counter(0,0) end),
+    erlang:system_monitor(Logger, [{long_schedule, LongSchedule}]),
+    timer:send_after(10000,Logger,print),
+    ok.
+
+long_schedule_counter(LS,MS) ->
+    receive
+        {monitor, _Pid, long_schedule, [{timeout, ThisMS}|_]} ->
+            long_schedule_counter(LS+1, MS + ThisMS);
+        print ->
+            timer:send_after(10000,self(),print),
+            case LS of
+                0 ->
+                    io:format("0 LS/s~n");
+                _ ->
+                    io:format("~.2f LS/s | ~.2f ms AVG~n",[LS/10,MS/LS])
+            end,
+            long_schedule_counter(0,0)
+    end.
+
 low_generator(0, ChildrenPerSecond) ->
     timer:sleep(1000),
     low_generator(ChildrenPerSecond, ChildrenPerSecond);
@@ -51,6 +78,11 @@ high_generator(Remaining, ChildrenPerSecond) ->
 low_spinner_starter() ->
     low_spin(400),
     spawn(many_pids_test, low_spinner_starter, []).
+
+high_spinner_starter() ->
+    high(),
+    timer:sleep(5),
+    spawn(fun high_spinner_starter/0).
 
 low_spinner_killer() ->
     PID = spawn(fun high/0),
