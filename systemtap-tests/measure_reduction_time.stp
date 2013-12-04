@@ -1,0 +1,31 @@
+#! /usr/bin/env stap
+
+global times;
+
+global start_t = 0;
+
+probe process("beam.smp").mark("process__scheduled")
+{
+    if (pid() == target())
+        start_t = gettimeofday_us()
+}
+
+probe process("beam.smp").mark("process__unscheduled")
+{
+    if (pid() == target()) {
+        end_t = gettimeofday_us()
+        if ($calls >= 2000)
+            times <<< end_t - start_t
+    }
+}
+
+probe timer.s(5)
+{
+    average = @avg(times);
+    minimum = @min(times);
+    maximum = @max(times);
+    delete(times);
+    printf("%d us\n", average);
+    printf("%d us\n", maximum);
+    printf("%d us\n", minimum);
+}
