@@ -1,0 +1,17 @@
+#! /usr/bin/env stap
+
+global reductions;
+
+probe process("beam.smp").mark("process__unscheduled")
+{
+    if (pid() == target()) {
+        reductions_per_us <<< $calls
+    }
+}
+
+probe timer.s(1)
+{
+    printf("Reductions per schedule\n");
+    print(@hist_linear(reductions, 0, 2000, 100));
+    delete(reductions);
+}
