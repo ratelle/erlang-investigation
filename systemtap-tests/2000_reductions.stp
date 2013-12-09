@@ -11,7 +11,7 @@ probe process("beam.smp").mark("process__scheduled")
 
 probe process("beam.smp").mark("process__unscheduled")
 {
-    if (pid() == target && $calls >= 2000)
+    if (pid() == target() && $calls >= 2000)
     {
         two_k[scheduled[tid()]] <<< 1
     }
