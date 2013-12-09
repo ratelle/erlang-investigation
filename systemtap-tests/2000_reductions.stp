@@ -22,7 +22,7 @@ probe timer.s(1)
     foreach (key in two_k)
     {
         printf("%s : %i\n", key, @count(two_k[key]))
-        delete(two_k[key])
     }
+    delete(two_k)
     printf("\n")
 }
