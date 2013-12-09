@@ -1,0 +1,28 @@
+#! /usr/bin/env stap
+
+global scheduled
+global two_k
+
+probe process("beam.smp").mark("process__scheduled")
+{
+    if (pid() == target())
+        scheduled[tid()] = user_string($arg2)
+}
+
+probe process("beam.smp").mark("process__unscheduled")
+{
+    if (pid() == target && $calls >= 2000)
+    {
+        two_k[scheduled[tid()]] <<< 1
+    }
+}
+
+probe timer.s(1)
+{
+    foreach (key in two_k)
+    {
+        printf("%s : %i\n", key, @count(two_k[key]))
+        delete(two_k[key])
+    }
+    printf("\n")
+}
