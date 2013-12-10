@@ -18,9 +18,9 @@ probe process("beam.smp").mark("process__unscheduled")
     }
 }
 
-probe timer.s(1)
+probe timer.s(2)
 {
-    printf("Reductions per us\n");
-    print(@hist_linear(reductions_per_us, 0, 50, 1));
+    printf("Total = %i\n",@count(reductions_per_us));
+    print(@hist_linear(reductions_per_us, 0, 15, 1));
     delete(reductions_per_us);
 }

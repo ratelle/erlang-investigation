@@ -5,7 +5,7 @@ global reductions;
 probe process("beam.smp").mark("process__unscheduled")
 {
     if (pid() == target()) {
-        reductions_per_us <<< $calls
+        reductions <<< $calls
     }
 }
 

@@ -17,12 +17,11 @@ probe process("beam.smp").mark("process__unscheduled")
     }
 }
 
-probe timer.s(1)
+probe timer.s(5)
 {
     foreach (key in two_k)
     {
-        printf("%s : %i\n", key, @count(two_k[key]))
+        printf("%i %s\n", @count(two_k[key]), key)
     }
-    delete(two_k)
-    printf("\n")
+    exit()
 }
