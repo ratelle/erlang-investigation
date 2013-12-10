@@ -13,12 +13,13 @@ probe process("beam.smp").mark("process__unscheduled")
 {
     if (pid() == target()) {
         end_t = gettimeofday_us()
+	calls = $calls >= 2000 ? 2000 : $calls
         run_time = end_t - start_times[tid()]
-        reductions_per_us <<< $calls / run_time
+        reductions_per_us <<< calls / run_time
     }
 }
 
-probe timer.s(2)
+probe timer.s(1)
 {
     printf("Total = %i\n",@count(reductions_per_us));
     print(@hist_linear(reductions_per_us, 0, 15, 1));

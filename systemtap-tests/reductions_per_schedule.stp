@@ -5,13 +5,13 @@ global reductions;
 probe process("beam.smp").mark("process__unscheduled")
 {
     if (pid() == target()) {
-        reductions <<< $calls
+        reductions <<< $calls >= 2000 ? 2000 : $calls
     }
 }
 
 probe timer.s(1)
 {
-    printf("Reductions per schedule\n");
+    printf("Total = %i\n",@count(reductions));
     print(@hist_linear(reductions, 0, 2000, 100));
     delete(reductions);
 }
