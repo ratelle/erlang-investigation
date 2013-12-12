@@ -2,16 +2,25 @@
 
 global reductions;
 
+probe process("beam.smp").mark("process__scheduled")
+{
+    if (pid() == target())
+        start_times[tid()] = gettimeofday_us()
+}
+
 probe process("beam.smp").mark("process__unscheduled")
 {
     if (pid() == target()) {
-        reductions <<< $calls >= 2000 ? 2000 : $calls
+        end_t = gettimeofday_us()
+        run_time = end_t - start_times[tid()]
+        if (run_time >= $1)
+            reductions <<< $calls >= 2000 ? 2000 : $calls
     }
 }
 
 probe timer.s(1)
 {
-    printf("Total = %i\n",@count(reductions));
+    printf("Total = %i over %ims\n",@count(reductions),$1);
     print(@hist_linear(reductions, 0, 2000, 100));
     delete(reductions);
 }
