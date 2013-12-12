@@ -1,6 +1,7 @@
 #! /usr/bin/env stap
 
 global reductions;
+global start_times;
 
 probe process("beam.smp").mark("process__scheduled")
 {
