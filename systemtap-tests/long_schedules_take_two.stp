@@ -1,0 +1,12 @@
+#! /usr/bin/env stap
+
+
+
+probe process("beam.smp").mark("process__spawn")
+{
+    if (pid() == target())
+        printf("%s : %s\n",user_string($arg1),user_string($arg2));
+
+}
+
+
