@@ -1,0 +1,29 @@
+#! /usr/bin/env stap
+
+global reductions;
+global start_times;
+
+probe process("beam.smp").mark("process__scheduled")
+{
+    if (pid() == target())
+        start_times[tid()] = gettimeofday_us()
+}
+
+probe process("beam.smp").mark("process__unscheduled")
+{
+    if (pid() == target()) {
+        end_t = gettimeofday_us()
+	calls = $calls >= 2000 ? 2000 : $calls
+        run_time = end_t - start_times[tid()]
+        reductions_per_us = calls / run_time
+        if (reductions_per_us == $1)
+           reductions <<< calls
+    }
+}
+
+probe timer.s(1)
+{
+    printf("Total = %i\n",@count(reductions));
+    print(@hist_linear(reductions, 0, 2000, 200));
+    delete(reductions);
+}
