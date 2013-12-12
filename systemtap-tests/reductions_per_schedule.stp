@@ -21,7 +21,7 @@ probe process("beam.smp").mark("process__unscheduled")
 
 probe timer.s(1)
 {
-    printf("Total = %i over %ims\n",@count(reductions),$1);
+    printf("Total = %i over %ius\n",@count(reductions),$1);
     print(@hist_linear(reductions, 0, 2000, 100));
     delete(reductions);
 }
